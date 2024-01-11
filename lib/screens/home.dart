@@ -1,8 +1,8 @@
+import 'package:bilheteria_panucci/logic/cubit/home_cubit.dart';
 import 'package:flutter/material.dart';
-import 'package:bilheteria_panucci/components/classification.dart';
 import 'package:bilheteria_panucci/components/home/genre_filter.dart';
 import 'package:bilheteria_panucci/components/movie_card.dart';
-import 'package:bilheteria_panucci/models/movie.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -12,10 +12,12 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final HomeCubit homeCubit = HomeCubit();
 
   @override
   void initState() {
     super.initState();
+    homeCubit.getMovies();
   }
 
   @override
@@ -32,17 +34,46 @@ class _HomeState extends State<Home> {
                   style: Theme.of(context).textTheme.displayLarge,
                 ),
               ),
-              const GenreFilter(),
-              SliverGrid.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisExtent: 240,
-                ),
-                itemBuilder: (context, index) {
-                  return MovieCard(movie: Movie(name: "James Bond", classification: Classification.naoRecomendado12, duration: "1h 22min", sinopse: "James Bond é um agente", genre: "Suspense", imageURI: null, sessions: ["18:00"]));
+              BlocProvider(
+                create: (BuildContext context) => homeCubit,
+                child: const GenreFilter(),
+              ),
+              BlocBuilder<HomeCubit, HomeStates>(
+                bloc: homeCubit,
+                builder: (context, state) {
+                  if (state is HomeLoading) {
+                    return const SliverFillRemaining(
+                        child: Center(child: CircularProgressIndicator()));
+                  } else if (state is HomeSuccess) {
+                    return SliverGrid.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisExtent: 240,
+                      ),
+                      itemBuilder: (context, index) {
+                        return MovieCard(movie: state.movies[index]);
+                      },
+                      itemCount: state.movies.length,
+                    );
+                  } else if (state is HomeError) {
+                    return SliverFillRemaining(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.not_interested,
+                            size: 30.0,
+                          ),
+                          const SizedBox(height: 16.0),
+                          Text(state.error),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SliverToBoxAdapter();
                 },
-                itemCount: 5,
               ),
             ],
           ),

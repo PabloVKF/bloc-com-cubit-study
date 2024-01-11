@@ -11,11 +11,10 @@ class MovieCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Card(
-            clipBehavior: Clip.hardEdge,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 200),
-              child: InkWell(
+        Expanded(
+          child: Card(
+              clipBehavior: Clip.hardEdge,
+              child: InkWell( // Removi o ConstrainedBox que envolvia esse  inkWell e adicionei o Expanded no card para ele ocupar o máximo de espaço possível na Column
                   onTap: () {
                     Navigator.push(
                       context,
@@ -27,18 +26,23 @@ class MovieCard extends StatelessWidget {
                   child: movie.imageURI != null
                       ? Ink(
                           width: double.infinity,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                                image: NetworkImage(movie.imageURI!),
-                                fit: BoxFit.cover),
+                          // Removi o decorador e adicionei esse child para tratar uma Imagem que não estava carregando corretamente
+                          child: Image.network(
+                            movie.imageURI!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Ink(
+                              child: const Center(
+                                child: Icon(Icons.error),
+                              ),
+                            ),
                           ),
                         )
                       : Ink(
                           child: const Center(
                             child: Icon(Icons.error),
                           ),
-                        )),
-            )),
+                        ))),
+        ),
         Text(
           movie.name,
           style: Theme.of(context).textTheme.displaySmall,
